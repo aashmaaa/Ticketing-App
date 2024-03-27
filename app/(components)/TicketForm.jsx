@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-export const TicketForm = () => {
+export const TicketForm = ({ ticket }) => {
+  const EDITMODE = ticket.id === "new" ? false : true;
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -18,6 +19,19 @@ export const TicketForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (EDITMODE) {
+      const res = await fetch(`/api/Tickets/${ticket._id}`, {
+        method: "PUT",
+        body: JSON.stringify({ formData }),
+        "content-type": "application/json",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to Update Ticket.");
+      }
+    }
+
     const res = await fetch("/api/Tickets", {
       method: "POST",
       body: JSON.stringify({ formData }),
@@ -41,6 +55,15 @@ export const TicketForm = () => {
     category: "Hardware Problem",
   };
 
+  if (EDITMODE) {
+    startingTicket["title"] = ticket.title;
+    startingTicket["description"] = ticket.description;
+    startingTicket["priority"] = ticket.priority;
+    startingTicket["progress"] = ticket.progress;
+    startingTicket["status"] = ticket.status;
+    startingTicket["category"] = ticket.category;
+  }
+
   const [formData, setFormData] = useState(startingTicketData);
   return (
     <div>
@@ -50,7 +73,7 @@ export const TicketForm = () => {
           method="post"
           onSubmit={handleSubmit}
         >
-          <h3>Create your Ticket</h3>
+          <h3>{EDITMODE ? "Update your Ticket" : "Create your Ticket"}</h3>
           <label>Title</label>
           <input
             id="title"
@@ -153,7 +176,11 @@ export const TicketForm = () => {
             <option value="done">Done</option>
           </select>
 
-          <input type="submit" className="btn" value="Create Ticket" />
+          <input
+            type="submit"
+            className="btn"
+            value={EDITMODE ? "Update your Ticket" : "Create your Ticket"}
+          />
         </form>
       </div>
     </div>
